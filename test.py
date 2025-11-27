@@ -1,5 +1,5 @@
 import asyncio
-from server import _get_certificate_and_chain, _generate_self_signed_cert, _parse_certificate_pem
+from server import get_certificate_and_chain, generate_self_signed_cert, parse_certificate_pem
 import json
 
 def print_json(data):
@@ -7,20 +7,20 @@ def print_json(data):
 
 async def main():
     print("--- Testing generate_self_signed_cert ---")
-    cert_data = _generate_self_signed_cert("test.local", 30)
+    cert_data = generate_self_signed_cert.fn("test.local", 30)
     print("Generated Certificate:")
     print_json(cert_data)
     
     if "certificate_pem" in cert_data:
         print("\n--- Testing parse_certificate_pem ---")
-        parsed = _parse_certificate_pem(cert_data["certificate_pem"])
+        parsed = parse_certificate_pem.fn(cert_data["certificate_pem"])
         print("Parsed Certificate:")
         print_json(parsed)
 
     print("\n--- Testing get_certificate_and_chain (google.com) ---")
     # Note: This requires internet access
     try:
-        chain_data = _get_certificate_and_chain("google.com")
+        chain_data = get_certificate_and_chain.fn("google.com")
         print("Certificate Chain Data:")
         # Print only the subject of the first cert to avoid huge output
         if "certificate" in chain_data:

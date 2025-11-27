@@ -62,7 +62,16 @@ def _parse_x509_certificate(cert: x509.Certificate) -> Dict[str, Any]:
     }
 
 
-def _get_certificate_and_chain(hostname: str, port: int = 443) -> Dict[str, Any]:
+
+@mcp.tool(annotations={"readOnlyHint": True})
+def get_certificate_and_chain(hostname: str, port: int = 443) -> Dict[str, Any]:
+    """
+    Retrieves the SSL certificate and its chain from a remote server.
+    
+    Args:
+        hostname: The hostname to connect to.
+        port: The port to connect to (default: 443).
+    """
     try:
         # Use OpenSSL directly to reliably get the chain
         ctx = OpenSSL.SSL.Context(OpenSSL.SSL.SSLv23_METHOD)
@@ -89,18 +98,15 @@ def _get_certificate_and_chain(hostname: str, port: int = 443) -> Dict[str, Any]
     except Exception as e:
         return {"error": str(e)}
 
-@mcp.tool()
-def get_certificate_and_chain(hostname: str, port: int = 443) -> Dict[str, Any]:
+@mcp.tool(annotations={"readOnlyHint": True})
+def generate_self_signed_cert(common_name: str, valid_days: int = 365) -> Dict[str, str]:
     """
-    Retrieves the SSL certificate and its chain from a remote server.
+    Generates a self-signed SSL certificate.
     
     Args:
-        hostname: The hostname to connect to.
-        port: The port to connect to (default: 443).
+        common_name: The Common Name (CN) for the certificate (e.g., "localhost").
+        valid_days: Number of days the certificate is valid.
     """
-    return _get_certificate_and_chain(hostname, port)
-
-def _generate_self_signed_cert(common_name: str, valid_days: int = 365) -> Dict[str, str]:
     key = rsa.generate_private_key(
         public_exponent=65537,
         key_size=2048,
@@ -144,25 +150,7 @@ def _generate_self_signed_cert(common_name: str, valid_days: int = 365) -> Dict[
         "private_key_pem": key_pem
     }
 
-@mcp.tool()
-def generate_self_signed_cert(common_name: str, valid_days: int = 365) -> Dict[str, str]:
-    """
-    Generates a self-signed SSL certificate.
-    
-    Args:
-        common_name: The Common Name (CN) for the certificate (e.g., "localhost").
-        valid_days: Number of days the certificate is valid.
-    """
-    return _generate_self_signed_cert(common_name, valid_days)
-
-def _parse_certificate_pem(pem_content: str) -> Dict[str, Any]:
-    try:
-        cert = x509.load_pem_x509_certificate(pem_content.encode('utf-8'))
-        return _parse_x509_certificate(cert)
-    except Exception as e:
-        return {"error": str(e)}
-
-@mcp.tool()
+@mcp.tool(annotations={"readOnlyHint": True})
 def parse_certificate_pem(pem_content: str) -> Dict[str, Any]:
     """
     Parses a PEM-encoded certificate and returns its details.
@@ -170,7 +158,11 @@ def parse_certificate_pem(pem_content: str) -> Dict[str, Any]:
     Args:
         pem_content: The PEM encoded certificate string.
     """
-    return _parse_certificate_pem(pem_content)
+    try:
+        cert = x509.load_pem_x509_certificate(pem_content.encode('utf-8'))
+        return _parse_x509_certificate(cert)
+    except Exception as e:
+        return {"error": str(e)}
 
 if __name__ == "__main__":
     mcp.run()
