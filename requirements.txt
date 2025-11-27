@@ -1,0 +1,4 @@
+fastmcp
+pyopenssl
+service_identity
+cryptography
